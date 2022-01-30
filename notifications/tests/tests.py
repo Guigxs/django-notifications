@@ -179,313 +179,313 @@ class NotificationManagersTest(TestCase):
         self.assertEqual(Notification.objects.deleted().count(), 0)
 
 
-class NotificationTestPages(TestCase):
-    ''' Django notifications automated page tests '''
-    def setUp(self):
-        self.message_count = 10
-        self.from_user = User.objects.create_user(username="from", password="pwd", email="example@example.com")
-        self.to_user = User.objects.create_user(username="to", password="pwd", email="example@example.com")
-        self.to_user.is_staff = True
-        self.to_user.save()
-        for _ in range(self.message_count):
-            notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
+# class NotificationTestPages(TestCase):
+#     ''' Django notifications automated page tests '''
+#     def setUp(self):
+#         self.message_count = 10
+#         self.from_user = User.objects.create_user(username="from", password="pwd", email="example@example.com")
+#         self.to_user = User.objects.create_user(username="to", password="pwd", email="example@example.com")
+#         self.to_user.is_staff = True
+#         self.to_user.save()
+#         for _ in range(self.message_count):
+#             notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
 
-    def logout(self):
-        self.client.post(reverse('admin:logout')+'?next=/', {})
+#     def logout(self):
+#         self.client.post(reverse('admin:logout')+'?next=/', {})
 
-    def login(self, username, password):
-        self.logout()
-        response = self.client.post(reverse('login'), {'username': username, 'password': password})
-        self.assertEqual(response.status_code, 302)
-        return response
+#     def login(self, username, password):
+#         self.logout()
+#         response = self.client.post(reverse('login'), {'username': username, 'password': password})
+#         self.assertEqual(response.status_code, 302)
+#         return response
 
-    def test_all_messages_page(self):
-        self.login('to', 'pwd')
-        response = self.client.get(reverse('notifications:all'))
+#     def test_all_messages_page(self):
+#         self.login('to', 'pwd')
+#         response = self.client.get(reverse('notifications:all'))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.all()))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.all()))
 
-    def test_unread_messages_pages(self):
-        self.login('to', 'pwd')
-        response = self.client.get(reverse('notifications:unread'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
-        self.assertEqual(len(response.context['notifications']), self.message_count)
+#     def test_unread_messages_pages(self):
+#         self.login('to', 'pwd')
+#         response = self.client.get(reverse('notifications:unread'))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
+#         self.assertEqual(len(response.context['notifications']), self.message_count)
 
-        for index, notification in enumerate(self.to_user.notifications.all()):
-            if index % 3 == 0:
-                response = self.client.get(reverse('notifications:mark_as_read', args=[id2slug(notification.id)]))
-                self.assertEqual(response.status_code, 302)
+#         for index, notification in enumerate(self.to_user.notifications.all()):
+#             if index % 3 == 0:
+#                 response = self.client.get(reverse('notifications:mark_as_read', args=[id2slug(notification.id)]))
+#                 self.assertEqual(response.status_code, 302)
 
-        response = self.client.get(reverse('notifications:unread'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
-        self.assertTrue(len(response.context['notifications']) < self.message_count)
+#         response = self.client.get(reverse('notifications:unread'))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
+#         self.assertTrue(len(response.context['notifications']) < self.message_count)
 
-        response = self.client.get(reverse('notifications:mark_all_as_read'))
-        self.assertRedirects(response, reverse('notifications:unread'))
-        response = self.client.get(reverse('notifications:unread'))
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
-        self.assertEqual(len(response.context['notifications']), 0)
+#         response = self.client.get(reverse('notifications:mark_all_as_read'))
+#         self.assertRedirects(response, reverse('notifications:unread'))
+#         response = self.client.get(reverse('notifications:unread'))
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
+#         self.assertEqual(len(response.context['notifications']), 0)
 
-    def test_next_pages(self):
-        self.login('to', 'pwd')
-        query_parameters = '?var1=hello&var2=world'
+#     def test_next_pages(self):
+#         self.login('to', 'pwd')
+#         query_parameters = '?var1=hello&var2=world'
 
-        response = self.client.get(reverse('notifications:mark_all_as_read'),data={
-            "next": reverse('notifications:unread')  + query_parameters,
-        })
-        self.assertRedirects(response, reverse('notifications:unread') + query_parameters)
+#         response = self.client.get(reverse('notifications:mark_all_as_read'),data={
+#             "next": reverse('notifications:unread')  + query_parameters,
+#         })
+#         self.assertRedirects(response, reverse('notifications:unread') + query_parameters)
 
-        slug = id2slug(self.to_user.notifications.first().id)
-        response = self.client.get(reverse('notifications:mark_as_read', args=[slug]), data={
-            "next": reverse('notifications:unread') + query_parameters,
-        })
-        self.assertRedirects(response, reverse('notifications:unread') + query_parameters)
+#         slug = id2slug(self.to_user.notifications.first().id)
+#         response = self.client.get(reverse('notifications:mark_as_read', args=[slug]), data={
+#             "next": reverse('notifications:unread') + query_parameters,
+#         })
+#         self.assertRedirects(response, reverse('notifications:unread') + query_parameters)
 
-        slug = id2slug(self.to_user.notifications.first().id)
-        response = self.client.get(reverse('notifications:mark_as_unread', args=[slug]), {
-            "next": reverse('notifications:unread') + query_parameters,
-        })
-        self.assertRedirects(response, reverse('notifications:unread') + query_parameters)
+#         slug = id2slug(self.to_user.notifications.first().id)
+#         response = self.client.get(reverse('notifications:mark_as_unread', args=[slug]), {
+#             "next": reverse('notifications:unread') + query_parameters,
+#         })
+#         self.assertRedirects(response, reverse('notifications:unread') + query_parameters)
 
-    def test_delete_messages_pages(self):
-        self.login('to', 'pwd')
+#     def test_delete_messages_pages(self):
+#         self.login('to', 'pwd')
 
-        slug = id2slug(self.to_user.notifications.first().id)
-        response = self.client.get(reverse('notifications:delete', args=[slug]))
-        self.assertRedirects(response, reverse('notifications:all'))
+#         slug = id2slug(self.to_user.notifications.first().id)
+#         response = self.client.get(reverse('notifications:delete', args=[slug]))
+#         self.assertRedirects(response, reverse('notifications:all'))
 
-        response = self.client.get(reverse('notifications:all'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.all()))
-        self.assertEqual(len(response.context['notifications']), self.message_count-1)
+#         response = self.client.get(reverse('notifications:all'))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.all()))
+#         self.assertEqual(len(response.context['notifications']), self.message_count-1)
 
-        response = self.client.get(reverse('notifications:unread'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
-        self.assertEqual(len(response.context['notifications']), self.message_count-1)
+#         response = self.client.get(reverse('notifications:unread'))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
+#         self.assertEqual(len(response.context['notifications']), self.message_count-1)
 
-    @override_settings(DJANGO_NOTIFICATIONS_CONFIG={
-        'SOFT_DELETE': True
-    })  # pylint: disable=invalid-name
-    def test_soft_delete_messages_manager(self):
-        self.login('to', 'pwd')
+#     @override_settings(DJANGO_NOTIFICATIONS_CONFIG={
+#         'SOFT_DELETE': True
+#     })  # pylint: disable=invalid-name
+#     def test_soft_delete_messages_manager(self):
+#         self.login('to', 'pwd')
 
-        slug = id2slug(self.to_user.notifications.first().id)
-        response = self.client.get(reverse('notifications:delete', args=[slug]))
-        self.assertRedirects(response, reverse('notifications:all'))
+#         slug = id2slug(self.to_user.notifications.first().id)
+#         response = self.client.get(reverse('notifications:delete', args=[slug]))
+#         self.assertRedirects(response, reverse('notifications:all'))
 
-        response = self.client.get(reverse('notifications:all'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.active()))
-        self.assertEqual(len(response.context['notifications']), self.message_count-1)
+#         response = self.client.get(reverse('notifications:all'))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.active()))
+#         self.assertEqual(len(response.context['notifications']), self.message_count-1)
 
-        response = self.client.get(reverse('notifications:unread'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
-        self.assertEqual(len(response.context['notifications']), self.message_count-1)
+#         response = self.client.get(reverse('notifications:unread'))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(len(response.context['notifications']), len(self.to_user.notifications.unread()))
+#         self.assertEqual(len(response.context['notifications']), self.message_count-1)
 
-    def test_unread_count_api(self):
-        self.login('to', 'pwd')
+#     def test_unread_count_api(self):
+#         self.login('to', 'pwd')
 
-        response = self.client.get(reverse('notifications:live_unread_notification_count'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(list(data.keys()), ['unread_count'])
-        self.assertEqual(data['unread_count'], self.message_count)
+#         response = self.client.get(reverse('notifications:live_unread_notification_count'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(list(data.keys()), ['unread_count'])
+#         self.assertEqual(data['unread_count'], self.message_count)
 
-        Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
-        response = self.client.get(reverse('notifications:live_unread_notification_count'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(list(data.keys()), ['unread_count'])
-        self.assertEqual(data['unread_count'], 0)
+#         Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
+#         response = self.client.get(reverse('notifications:live_unread_notification_count'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(list(data.keys()), ['unread_count'])
+#         self.assertEqual(data['unread_count'], 0)
 
-        notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
-        response = self.client.get(reverse('notifications:live_unread_notification_count'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(list(data.keys()), ['unread_count'])
-        self.assertEqual(data['unread_count'], 1)
+#         notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
+#         response = self.client.get(reverse('notifications:live_unread_notification_count'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(list(data.keys()), ['unread_count'])
+#         self.assertEqual(data['unread_count'], 1)
 
-    def test_all_count_api(self):
-        self.login('to', 'pwd')
+#     def test_all_count_api(self):
+#         self.login('to', 'pwd')
 
-        response = self.client.get(reverse('notifications:live_all_notification_count'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(list(data.keys()), ['all_count'])
-        self.assertEqual(data['all_count'], self.message_count)
+#         response = self.client.get(reverse('notifications:live_all_notification_count'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(list(data.keys()), ['all_count'])
+#         self.assertEqual(data['all_count'], self.message_count)
 
-        Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
-        response = self.client.get(reverse('notifications:live_all_notification_count'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(list(data.keys()), ['all_count'])
-        self.assertEqual(data['all_count'], self.message_count)
+#         Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
+#         response = self.client.get(reverse('notifications:live_all_notification_count'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(list(data.keys()), ['all_count'])
+#         self.assertEqual(data['all_count'], self.message_count)
 
-        notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
-        response = self.client.get(reverse('notifications:live_all_notification_count'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(list(data.keys()), ['all_count'])
-        self.assertEqual(data['all_count'], self.message_count + 1)
+#         notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
+#         response = self.client.get(reverse('notifications:live_all_notification_count'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(list(data.keys()), ['all_count'])
+#         self.assertEqual(data['all_count'], self.message_count + 1)
 
-    def test_unread_list_api(self):
-        self.login('to', 'pwd')
+#     def test_unread_list_api(self):
+#         self.login('to', 'pwd')
 
-        response = self.client.get(reverse('notifications:live_unread_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
-        self.assertEqual(data['unread_count'], self.message_count)
-        self.assertEqual(len(data['unread_list']), self.message_count)
+#         response = self.client.get(reverse('notifications:live_unread_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
+#         self.assertEqual(data['unread_count'], self.message_count)
+#         self.assertEqual(len(data['unread_list']), self.message_count)
 
-        response = self.client.get(reverse('notifications:live_unread_notification_list'), data={"max": 5})
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
-        self.assertEqual(data['unread_count'], self.message_count)
-        self.assertEqual(len(data['unread_list']), 5)
+#         response = self.client.get(reverse('notifications:live_unread_notification_list'), data={"max": 5})
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
+#         self.assertEqual(data['unread_count'], self.message_count)
+#         self.assertEqual(len(data['unread_list']), 5)
 
-        # Test with a bad 'max' value
-        response = self.client.get(reverse('notifications:live_unread_notification_list'), data={
-            "max": "this_is_wrong",
-        })
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
-        self.assertEqual(data['unread_count'], self.message_count)
-        self.assertEqual(len(data['unread_list']), self.message_count)
+#         # Test with a bad 'max' value
+#         response = self.client.get(reverse('notifications:live_unread_notification_list'), data={
+#             "max": "this_is_wrong",
+#         })
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
+#         self.assertEqual(data['unread_count'], self.message_count)
+#         self.assertEqual(len(data['unread_list']), self.message_count)
 
-        Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
-        response = self.client.get(reverse('notifications:live_unread_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
-        self.assertEqual(data['unread_count'], 0)
-        self.assertEqual(len(data['unread_list']), 0)
+#         Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
+#         response = self.client.get(reverse('notifications:live_unread_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
+#         self.assertEqual(data['unread_count'], 0)
+#         self.assertEqual(len(data['unread_list']), 0)
 
-        notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
-        response = self.client.get(reverse('notifications:live_unread_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
-        self.assertEqual(data['unread_count'], 1)
-        self.assertEqual(len(data['unread_list']), 1)
-        self.assertEqual(data['unread_list'][0]['verb'], 'commented')
-        self.assertEqual(data['unread_list'][0]['slug'], id2slug(data['unread_list'][0]['id']))
+#         notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
+#         response = self.client.get(reverse('notifications:live_unread_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['unread_count', 'unread_list'])
+#         self.assertEqual(data['unread_count'], 1)
+#         self.assertEqual(len(data['unread_list']), 1)
+#         self.assertEqual(data['unread_list'][0]['verb'], 'commented')
+#         self.assertEqual(data['unread_list'][0]['slug'], id2slug(data['unread_list'][0]['id']))
 
-    def test_all_list_api(self):
-        self.login('to', 'pwd')
+#     def test_all_list_api(self):
+#         self.login('to', 'pwd')
 
-        response = self.client.get(reverse('notifications:live_all_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
-        self.assertEqual(data['all_count'], self.message_count)
-        self.assertEqual(len(data['all_list']), self.message_count)
+#         response = self.client.get(reverse('notifications:live_all_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
+#         self.assertEqual(data['all_count'], self.message_count)
+#         self.assertEqual(len(data['all_list']), self.message_count)
 
-        response = self.client.get(reverse('notifications:live_all_notification_list'), data={"max": 5})
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
-        self.assertEqual(data['all_count'], self.message_count)
-        self.assertEqual(len(data['all_list']), 5)
+#         response = self.client.get(reverse('notifications:live_all_notification_list'), data={"max": 5})
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
+#         self.assertEqual(data['all_count'], self.message_count)
+#         self.assertEqual(len(data['all_list']), 5)
 
-        # Test with a bad 'max' value
-        response = self.client.get(reverse('notifications:live_all_notification_list'), data={
-            "max": "this_is_wrong",
-        })
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
-        self.assertEqual(data['all_count'], self.message_count)
-        self.assertEqual(len(data['all_list']), self.message_count)
+#         # Test with a bad 'max' value
+#         response = self.client.get(reverse('notifications:live_all_notification_list'), data={
+#             "max": "this_is_wrong",
+#         })
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
+#         self.assertEqual(data['all_count'], self.message_count)
+#         self.assertEqual(len(data['all_list']), self.message_count)
 
-        Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
-        response = self.client.get(reverse('notifications:live_all_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
-        self.assertEqual(data['all_count'], self.message_count)
-        self.assertEqual(len(data['all_list']), self.message_count)
+#         Notification.objects.filter(recipient=self.to_user).mark_all_as_read()
+#         response = self.client.get(reverse('notifications:live_all_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
+#         self.assertEqual(data['all_count'], self.message_count)
+#         self.assertEqual(len(data['all_list']), self.message_count)
 
-        notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
-        response = self.client.get(reverse('notifications:live_all_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
-        self.assertEqual(data['all_count'], self.message_count + 1)
-        self.assertEqual(len(data['all_list']), self.message_count)
-        self.assertEqual(data['all_list'][0]['verb'], 'commented')
-        self.assertEqual(data['all_list'][0]['slug'], id2slug(data['all_list'][0]['id']))
+#         notify.send(self.from_user, recipient=self.to_user, verb='commented', action_object=self.from_user)
+#         response = self.client.get(reverse('notifications:live_all_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(sorted(list(data.keys())), ['all_count', 'all_list'])
+#         self.assertEqual(data['all_count'], self.message_count + 1)
+#         self.assertEqual(len(data['all_list']), self.message_count)
+#         self.assertEqual(data['all_list'][0]['verb'], 'commented')
+#         self.assertEqual(data['all_list'][0]['slug'], id2slug(data['all_list'][0]['id']))
 
-    def test_unread_list_api_mark_as_read(self):  # pylint: disable=invalid-name
-        self.login('to', 'pwd')
-        num_requested = 3
-        response = self.client.get(
-            reverse('notifications:live_unread_notification_list'),
-            data={"max": num_requested, "mark_as_read": 1}
-        )
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(data['unread_count'],
-                         self.message_count - num_requested)
-        self.assertEqual(len(data['unread_list']), num_requested)
-        response = self.client.get(
-            reverse('notifications:live_unread_notification_list'),
-            data={"max": num_requested, "mark_as_read": 1}
-        )
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(data['unread_count'],
-                         self.message_count - 2*num_requested)
-        self.assertEqual(len(data['unread_list']), num_requested)
+#     def test_unread_list_api_mark_as_read(self):  # pylint: disable=invalid-name
+#         self.login('to', 'pwd')
+#         num_requested = 3
+#         response = self.client.get(
+#             reverse('notifications:live_unread_notification_list'),
+#             data={"max": num_requested, "mark_as_read": 1}
+#         )
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(data['unread_count'],
+#                          self.message_count - num_requested)
+#         self.assertEqual(len(data['unread_list']), num_requested)
+#         response = self.client.get(
+#             reverse('notifications:live_unread_notification_list'),
+#             data={"max": num_requested, "mark_as_read": 1}
+#         )
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(data['unread_count'],
+#                          self.message_count - 2*num_requested)
+#         self.assertEqual(len(data['unread_list']), num_requested)
 
-    def test_live_update_tags(self):
-        from django.shortcuts import render
+#     def test_live_update_tags(self):
+#         from django.shortcuts import render
 
-        self.login('to', 'pwd')
-        factory = RequestFactory()
+#         self.login('to', 'pwd')
+#         factory = RequestFactory()
 
-        request = factory.get('/notification/live_updater')
-        request.user = self.to_user
+#         request = factory.get('/notification/live_updater')
+#         request.user = self.to_user
 
-        render(request, 'notifications/test_tags.html', {'request': request})
+#         render(request, 'notifications/test_tags.html', {'request': request})
 
-        # TODO: Add more tests to check what is being output.
+#         # TODO: Add more tests to check what is being output.
 
-    def test_anon_user_gets_nothing(self):
-        response = self.client.post(reverse('notifications:live_unread_notification_count'))
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(data['unread_count'], 0)
+#     def test_anon_user_gets_nothing(self):
+#         response = self.client.post(reverse('notifications:live_unread_notification_count'))
+#         self.assertEqual(response.status_code, 200)
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(data['unread_count'], 0)
 
-        response = self.client.post(reverse('notifications:live_unread_notification_list'))
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(data['unread_count'], 0)
-        self.assertEqual(data['unread_list'], [])
+#         response = self.client.post(reverse('notifications:live_unread_notification_list'))
+#         self.assertEqual(response.status_code, 200)
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(data['unread_count'], 0)
+#         self.assertEqual(data['unread_list'], [])
 
 
-class NotificationTestExtraData(TestCase):
-    ''' Django notifications automated extra data tests '''
-    def setUp(self):
-        self.message_count = 1
-        self.from_user = User.objects.create_user(username="from", password="pwd", email="example@example.com")
-        self.to_user = User.objects.create_user(username="to", password="pwd", email="example@example.com")
-        self.to_user.is_staff = True
-        self.to_user.save()
-        for _ in range(self.message_count):
-            notify.send(
-                self.from_user,
-                recipient=self.to_user,
-                verb='commented',
-                action_object=self.from_user,
-                url="/learn/ask-a-pro/q/test-question-9/299/",
-                other_content="Hello my 'world'"
-            )
+# class NotificationTestExtraData(TestCase):
+#     ''' Django notifications automated extra data tests '''
+#     def setUp(self):
+#         self.message_count = 1
+#         self.from_user = User.objects.create_user(username="from", password="pwd", email="example@example.com")
+#         self.to_user = User.objects.create_user(username="to", password="pwd", email="example@example.com")
+#         self.to_user.is_staff = True
+#         self.to_user.save()
+#         for _ in range(self.message_count):
+#             notify.send(
+#                 self.from_user,
+#                 recipient=self.to_user,
+#                 verb='commented',
+#                 action_object=self.from_user,
+#                 url="/learn/ask-a-pro/q/test-question-9/299/",
+#                 other_content="Hello my 'world'"
+#             )
 
-    def logout(self):
-        self.client.post(reverse('admin:logout')+'?next=/', {})
+#     def logout(self):
+#         self.client.post(reverse('admin:logout')+'?next=/', {})
 
-    def login(self, username, password):
-        self.logout()
-        response = self.client.post(reverse('login'), {'username': username, 'password': password})
-        self.assertEqual(response.status_code, 302)
-        return response
+#     def login(self, username, password):
+#         self.logout()
+#         response = self.client.post(reverse('login'), {'username': username, 'password': password})
+#         self.assertEqual(response.status_code, 302)
+#         return response
 
-    def test_extra_data(self):
-        self.login('to', 'pwd')
-        response = self.client.post(reverse('notifications:live_unread_notification_list'))
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(data['unread_list'][0]['data']['url'], "/learn/ask-a-pro/q/test-question-9/299/")
-        self.assertEqual(data['unread_list'][0]['data']['other_content'], "Hello my 'world'")
+#     def test_extra_data(self):
+#         self.login('to', 'pwd')
+#         response = self.client.post(reverse('notifications:live_unread_notification_list'))
+#         data = json.loads(response.content.decode('utf-8'))
+#         self.assertEqual(data['unread_list'][0]['data']['url'], "/learn/ask-a-pro/q/test-question-9/299/")
+#         self.assertEqual(data['unread_list'][0]['data']['other_content'], "Hello my 'world'")
 
 
 class TagTest(TestCase):
