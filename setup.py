@@ -18,15 +18,16 @@ with open('notifications/__init__.py', 'rb') as f:
 
 
 setup(
-    name='django-notifications-hq',
+    name='django-rest-notifications-hq',
     version=version,
-    description='GitHub notifications alike app for Django.',
+    description='GitHub notifications alike app for Django with rest routes.',
     long_description=open('README.rst').read(),
     author='django-notifications team',
     author_email='yang@yangyubo.com',
     url='http://github.com/django-notifications/django-notifications',
     install_requires=[
         'django>=2.2',
+        'djangorestframework>=3.13.1'
         'django-model-utils>=3.1.0',
         'jsonfield>=2.1.0',
         'pytz',
@@ -34,6 +35,7 @@ setup(
     ],
     test_requires=[
         'django>=2.2',
+        'djangorestframework>=3.13.1'
         'django-model-utils>=3.1.0',
         'jsonfield>=2.1.0',
         'pytz'
