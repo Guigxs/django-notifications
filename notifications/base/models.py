@@ -301,6 +301,9 @@ def notify_handler(verb, **kwargs):
                         ContentType.objects.get_for_model(obj))
 
         if kwargs and EXTRA_DATA:
+            for key in list(kwargs.keys()):
+                if hasattr(newnotify, key):
+                    setattr(newnotify, key, kwargs.pop(key))
             newnotify.data = kwargs
 
         newnotify.save()
