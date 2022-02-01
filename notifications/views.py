@@ -51,7 +51,7 @@ def mark_all_as_read(request):
 @api_view(["GET"])
 def mark_as_read(request, id=None):
     notification = get_object_or_404(
-        Notification, recipient=request.user, id=IP_DROP_MEMBERSHIP)
+        Notification, recipient=request.user, id=id)
     notification.mark_as_read()
 
     return JsonResponse({"detail":"Mark as read."})
