@@ -10,7 +10,6 @@ from django.forms import model_to_dict
 from django.shortcuts import get_object_or_404
 from notifications import settings
 from notifications.settings import get_config
-from notifications.utils import id2slug, slug2id
 from swapper import load_model
 
 from rest_framework.decorators import api_view, permission_classes
@@ -68,11 +67,9 @@ def mark_as_unread(request, id=None):
 
 @permission_classes((IsAuthenticated, ))
 @api_view(["GET"])
-def delete(request, slug=None):
-    notification_id = slug2id(slug)
-
+def delete(request, id=None):
     notification = get_object_or_404(
-        Notification, recipient=request.user, id=notification_id)
+        Notification, recipient=request.user, id=id)
 
     if settings.get_config()['SOFT_DELETE']:
         notification.deleted = True
