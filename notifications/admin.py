@@ -18,4 +18,4 @@ class NotificationAdmin(AbstractNotificationAdmin):
         return qs.prefetch_related('actor')
 
 
-admin.site.register(Notification, NotificationAdmin)
+# admin.site.register(Notification, NotificationAdmin)
