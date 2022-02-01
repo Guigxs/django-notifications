@@ -14,8 +14,16 @@ from swapper import load_model
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 Notification = load_model('notifications', 'Notification')
+
+def my_import(name):
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
 
 if StrictVersion(get_version()) >= StrictVersion('1.7.0'):
     from django.http import JsonResponse  # noqa
@@ -103,24 +111,13 @@ def live_unread_notification_list(request):
     unread_list = []
 
     for notification in request.user.notifications.unread()[0:num_to_fetch]:
-        struct = model_to_dict(notification)
-        struct['slug'] = id2slug(notification.id)
-        if notification.actor:
-            struct['actor'] = str(notification.actor)
-        if notification.target:
-            struct['target'] = str(notification.target)
-        if notification.action_object:
-            struct['action_object'] = str(notification.action_object)
-        if notification.data:
-            struct['data'] = notification.data
-        unread_list.append(struct)
+        unread_list.append(notification)
         if request.GET.get('mark_as_read'):
             notification.mark_as_read()
-    data = {
-        'unread_count': request.user.notifications.unread().count(),
-        'unread_list': unread_list
-    }
-    return JsonResponse(data)
+    
+    CustomSerializer = my_import(settings.get_config()['NOTIFICATIONS_NOTIFICATION_SERIALIZER'])
+    serializer = CustomSerializer(unread_list, many=True)
+    return Response(serializer.data)
 
 @permission_classes((IsAuthenticated, ))
 @api_view(["GET"])
@@ -140,24 +137,13 @@ def live_all_notification_list(request):
     all_list = []
 
     for notification in request.user.notifications.all()[0:num_to_fetch]:
-        struct = model_to_dict(notification)
-        struct['slug'] = id2slug(notification.id)
-        if notification.actor:
-            struct['actor'] = str(notification.actor)
-        if notification.target:
-            struct['target'] = str(notification.target)
-        if notification.action_object:
-            struct['action_object'] = str(notification.action_object)
-        if notification.data:
-            struct['data'] = notification.data
-        all_list.append(struct)
+        all_list.append(notification)
         if request.GET.get('mark_as_read'):
             notification.mark_as_read()
-    data = {
-        'all_count': request.user.notifications.count(),
-        'all_list': all_list
-    }
-    return JsonResponse(data)
+    
+    CustomSerializer = my_import(settings.get_config()['NOTIFICATIONS_NOTIFICATION_SERIALIZER'])
+    serializer = CustomSerializer(all_list, many=True)
+    return Response(serializer.data)
 
 @permission_classes((IsAuthenticated, ))
 @api_view(["GET"])
