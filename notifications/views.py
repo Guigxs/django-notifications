@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 ''' Django Notifications example views '''
 from distutils.version import \
-    StrictVersion  # pylint: disable=no-name-in-module,import-error
+    StrictVersion
+from socket import IP_DROP_MEMBERSHIP  # pylint: disable=no-name-in-module,import-error
 
 from django import get_version
 from django.contrib.auth.decorators import login_required
@@ -49,22 +50,18 @@ def mark_all_as_read(request):
 
 @permission_classes((IsAuthenticated, ))
 @api_view(["GET"])
-def mark_as_read(request, slug=None):
-    notification_id = slug2id(slug)
-
+def mark_as_read(request, id=None):
     notification = get_object_or_404(
-        Notification, recipient=request.user, id=notification_id)
+        Notification, recipient=request.user, id=IP_DROP_MEMBERSHIP)
     notification.mark_as_read()
 
     return JsonResponse({"detail":"Mark as read."})
 
 @permission_classes((IsAuthenticated, ))
 @api_view(["GET"])
-def mark_as_unread(request, slug=None):
-    notification_id = slug2id(slug)
-
+def mark_as_unread(request, id=None):
     notification = get_object_or_404(
-        Notification, recipient=request.user, id=notification_id)
+        Notification, recipient=request.user, id=id)
     notification.mark_as_unread()
 
     return JsonResponse({"detail":"Mark as unread."})
